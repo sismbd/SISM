@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Market Analysis</title>
+    <style>
+        body { font-family: Arial; margin: 0; padding: 20px; background: #f5f7fa; }
+        .login-box, .data-block { 
+            background: white; 
+            padding: 25px; 
+            margin: 15px 0; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0; /* Added border */
+        }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        .grid-container { display: grid; gap: 15px; }
+        .data-block h3 { margin-top: 0; color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .positive { color: #28a745; font-weight: bold; }
+        .negative { color: #dc3545; font-weight: bold; }
+        .probability { font-size: 1.2em; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div class="login-box" id="loginBox">
+        <h2>Market Analysis Portal</h2>
+        <input type="password" id="password" placeholder="Enter access code">
+        <button onclick="fetchData()">View Report</button>
+        <p id="error" style="color: red;"></p>
+    </div>
+
+    <div id="content" style="display: none;">
+        <div class="grid-container">
+            <div class="data-block">
+                <h3>Market Forecast</h3>
+                <div id="block1"></div>
+            </div>
+            
+            <div class="data-block">
+                <h3>Exceptional Status</h3>
+                <div id="block2"></div>
+            </div>
+
+            <div class="data-block">
+                <h3>Detailed Analysis</h3>
+                <table id="detailedTable">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<script>
+const SHEET_ID = '1RkLlOJnEF8ulEnB4G-zwx38fgWDfVNC6rHkqNHb1onU'; // update my ID
+const API_KEY = 'AIzaSyD1581LRh5Mb439BBsWZjL7SSNnX-kgp60';       //update my key
+
+async function fetchData() {
+    const passwordInput = document.getElementById('password').value.trim();
+    if(!passwordInput) return showError("Please enter access code");
+
+    try {
+        const response = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet?` +
+            `ranges=Sheet1!AC2&ranges=Sheet1!A:A&ranges=Sheet1!C:C&ranges=Sheet1!D:D&ranges=Sheet1!AA2&ranges=Sheet1!U4:AC15&key=${API_KEY}`
+        );
+        
+        if (!response.ok) throw new Error('Network error');
+        
+        const data = await response.json();
+        const ranges = data.valueRanges;
+
+        // Authorization check
+        const sheetPassword = ranges[0].values?.[0]?.[0];
+        if(sheetPassword !== passwordInput) throw new Error('Invalid access code');
+
+        processBlockData(ranges);
+
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('content').style.display = 'grid';
+        
+    } catch (error) {
+        showError(error.message);
+    }
+}
+
+function processBlockData(ranges) {
+    try {
+        // Block 1: Market Forecast
+        const dates = ranges[1].values || [];
+        const marketIndicators = ranges[2].values || [];
+        const probabilities = ranges[4].values || []; // Now index 4 for AA2
+
+        const date = dates.reverse().find(row => row[0])?.[0] || 'N/A';
+        const marketStatus = marketIndicators.reverse().find(row => row[0])?.[0]?.toUpperCase() || 'N';
+        const chancePercentage = probabilities[0]?.[0] || 'N/A';
+
+        const statusText = marketStatus === 'P' ? "POSITIVE" : "NEGATIVE";
+        const statusClass = marketStatus === 'P' ? "positive" : "negative";
+
+        document.getElementById('block1').innerHTML = `
+            On <strong>${date}</strong>, there is a 
+            <span class="probability ${statusClass}">${chancePercentage}</span> chance
+            that the market will be <span class="${statusClass}"><strong>${statusText}</strong></span>.
+            <div class="caution-note">The prediction may vary up to 5 points positive or negative</div>
+        `;
+
+        // Block 2: Exceptional Status (Column D)
+        const columnD = ranges[3].values || []; // Corrected to index 3 for column D
+        const lastDValue = columnD.reverse().find(row => row[0])?.[0] || 'N/A';
+        document.getElementById('block2').textContent = lastDValue;
+
+        // Block 3: Detailed Table (now index 5)
+        const tableData = ranges[5].values || [];
+        const table = document.getElementById('detailedTable');
+        if(tableData.length > 0) {
+            table.innerHTML = `
+                <thead><tr>${tableData[0].map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                <tbody>
+                    ${tableData.slice(1).map((row, rowIndex) => `
+                        <tr>
+                            ${row.map((cell, cellIndex) => 
+                                (cellIndex === 2 && [0, 4, 8].includes(rowIndex)) ? 
+                                `<td style="color: blue; font-weight: bold;">${cell}</td>` :
+                                `<td>${cell}</td>`
+                            ).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+        }
+
+    } catch (error) {
+        console.error("Processing error:", error);
+        showError("Data processing failed");
+    }
+}
+</script>
+
+<style>
+/* Add caution note styling */
+.caution-note {
+    color: #6c757d;
+    font-size: 0.9em;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* Existing styles remain unchanged */
+
+.caution-note {
+    color: #6c757d;
+    font-size: 0.9em;
+    margin-top: 10px;
+    font-style: italic;
+    animation: caution-blink 1s infinite;
+}
+
+@keyframes caution-blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+</style>
+</body>
+</html>
