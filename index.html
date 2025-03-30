@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced Market Analysis</title>
     <style>
-        body { font-family: Arial; margin: 0; padding: 20px; background: #f5f7fa; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: #D7DFEC; }
         .login-box, .data-block { 
             background: white; 
             padding: 25px; 
@@ -56,8 +56,8 @@
     </div>
 
 <script>
-const SHEET_ID = '1RkLlOJnEF8ulEnB4G-zwx38fgWDfVNC6rHkqNHb1onU'; // update my ID
-const API_KEY = 'AIzaSyD1581LRh5Mb439BBsWZjL7SSNnX-kgp60';       //update my key
+const SHEET_ID = '1RkLlOJnEF8ulEnB4G-zwx38fgWDfVNC6rHkqNHb1onU'; 
+const API_KEY = 'AIzaSyD1581LRh5Mb439BBsWZjL7SSNnX-kgp60';       
 
 async function fetchData() {
     const passwordInput = document.getElementById('password').value.trim();
@@ -93,7 +93,7 @@ function processBlockData(ranges) {
         // Block 1: Market Forecast
         const dates = ranges[1].values || [];
         const marketIndicators = ranges[2].values || [];
-        const probabilities = ranges[4].values || []; // Now index 4 for AA2
+        const probabilities = ranges[4].values || [];
 
         const date = dates.reverse().find(row => row[0])?.[0] || 'N/A';
         const marketStatus = marketIndicators.reverse().find(row => row[0])?.[0]?.toUpperCase() || 'N';
@@ -109,7 +109,7 @@ function processBlockData(ranges) {
             <div class="caution-note">The prediction may vary up to 5 points positive or negative</div>
         `;
 
-        // Block 2: Exceptional Status (Column D)
+        // Block 2: Exceptional Status
         const columnD = ranges[3].values || []; // Corrected to index 3 for column D
         const lastDValue = columnD.reverse().find(row => row[0])?.[0] || 'N/A';
         document.getElementById('block2').textContent = lastDValue;
@@ -153,7 +153,7 @@ function processBlockData(ranges) {
 /* Existing styles remain unchanged */
 
 .caution-note {
-    color: #6c757d;
+    color: #D32678;
     font-size: 0.9em;
     margin-top: 10px;
     font-style: italic;
@@ -165,7 +165,18 @@ function processBlockData(ranges) {
     50% { opacity: 0.3; }
     100% { opacity: 1; }
 }
+/* Update table cell borders */
+#detailedTable th, 
+#detailedTable td {
+    padding: 12px;
+    text-align: left;
+    border: 3px solid #ddd; /* Changed from border-bottom to full border */
+}
 
+/* Keep existing styles for highlighted cells */
+#detailedTable td[style*="color: blue"] {
+    border: 1px solid #ddd !important; /* Maintain border for highlighted cells */
+}
 </style>
 </body>
 </html>
